@@ -101,6 +101,19 @@ func (cluster *Cluster) RunBatch(bat *Batch) ([]interface{}, error) {
     var replies []interface{}
     for _, i := range bat.index {
 	if bat.batches[i].err != nil {
+        var randomNode *redisNode
+        // choose a random node other than failed one
+        cluster.rwLock.RLock()
+        for _, randomNode = range cluster.nodes {
+            if randomNode.address != bat.batches[i].node.address {
+                break
+            }
+        }
+        cluster.rwLock.RUnlock()
+
+        //cluster change
+        cluster.inform(randomNode)
+
 	    return nil, bat.batches[i].err
 	}
 
